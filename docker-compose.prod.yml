@@ -4,12 +4,18 @@
 # - El frontend se une a la red externa `proxy` para que el nginx principal
 #   (~/web) le haga proxy por nombre de contenedor. No se publica a internet.
 # - Limites de memoria para convivir con el resto de proyectos del servidor.
+# - La red frontend-backend tiene subred fija y es la salida por defecto del
+#   backend: Postgres corre en el host y ufw/pg_hba solo aceptan esa subred.
 
 services:
   backend:
     environment:
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75"
     mem_limit: 768m
+    networks:
+      frontend-backend:
+        gw_priority: 100
+      minio: {}
 
   frontend:
     mem_limit: 128m
@@ -18,6 +24,10 @@ services:
       - proxy
 
 networks:
+  frontend-backend:
+    ipam:
+      config:
+        - subnet: ${BACKEND_SUBNET:-192.168.80.0/20}
   proxy:
     name: proxy
     external: true
