@@ -2,6 +2,64 @@
 
 Tienda en línea con backend en Spring Boot 3.1 (Java 17) y frontend en Angular 16. Se despliega con Docker.
 
+## Funcionalidades
+
+**Tienda (clientes)**
+- Catálogo con buscador, ordenamiento por precio o nombre y vista de detalle del producto.
+- Carrito persistente (sobrevive a recargas) con control de cantidades y contador en el encabezado.
+- Registro e inicio de sesión con JWT. Tras ingresar, vuelves a la página donde estabas.
+- Pago con PayPal (sandbox): la orden se registra antes de redirigir y se confirma al volver.
+- Diseño responsive (escritorio y móvil), estados de carga, estados vacíos y notificaciones.
+
+**Administración (rol `ADMIN`)**
+- CRUD de productos con imagen (vista previa, validación de tipo y tamaño hasta 10 MB).
+- CRUD de categorías.
+- Rutas protegidas por rol. Si la sesión expira (15 min), se avisa y redirige al login.
+
+## Tecnologías
+
+| Capa | Tecnología | Versión | Uso |
+|---|---|---|---|
+| Backend | Java (Eclipse Temurin) | 17 | Lenguaje y runtime |
+| | Spring Boot | 3.1.2 | Web (REST), Data JPA, Security |
+| | Hibernate / Spring Data JPA | 6.2 | ORM. El esquema se genera con `ddl-auto=update` |
+| | JJWT | 0.11.5 | Generación y validación de tokens JWT |
+| | MapStruct + Lombok | 1.5.2 / 1.18.24 | Mapeo entidad ↔ dominio y reducción de código repetitivo |
+| | MinIO Java SDK | 8.5.7 | Subida, lectura y borrado de imágenes |
+| | PayPal REST SDK | 1.14.0 | Creación y ejecución de pagos |
+| | Maven | 3.9 | Build |
+| Frontend | Angular | 16.2 | SPA (módulos, router, formularios por plantilla, guards, interceptores) |
+| | TypeScript / RxJS | 5.1 / 7.8 | Lenguaje y programación reactiva |
+| | Bootstrap + Bootstrap Icons | 5.3 / 1.11 | Estilos, grilla responsive e iconos |
+| | ngx-toastr | 17 | Notificaciones |
+| | SweetAlert2 | 11 | Diálogos de confirmación |
+| Datos | PostgreSQL | 18 | Base de datos relacional |
+| | MinIO | RELEASE.2026-08-04 | Almacenamiento de objetos (S3) para imágenes |
+| Infraestructura | Docker + Docker Compose | v2 | Contenedores y orquestación |
+| | nginx | 1.27 (alpine) | Sirve el frontend y hace de proxy inverso hacia el backend |
+| | Node.js | 20 (alpine) | Compilación del frontend (solo en la etapa de build) |
+
+## Estructura del proyecto
+
+```
+.
+├── backend/                 Spring Boot (arquitectura hexagonal)
+│   ├── src/main/java/.../
+│   │   ├── domain/          Modelos y puertos (interfaces de repositorio)
+│   │   ├── application/     Casos de uso (servicios) y almacenamiento de imágenes
+│   │   └── infrastructure/  REST, JPA, seguridad JWT, PayPal y configuración de MinIO
+│   ├── src/main/resources/static/images/   Imágenes iniciales que se suben a MinIO al arrancar
+│   └── Dockerfile
+├── frontend/                Angular
+│   ├── src/app/components/  Páginas de la tienda y del panel de administración
+│   ├── src/app/services/    Clientes HTTP, carrito, sesión e interceptor
+│   ├── nginx.conf           Proxy de /api e /images hacia el backend
+│   └── Dockerfile
+├── minio/run-minio.ps1      Crea/arranca el contenedor MinIO (fuera del compose)
+├── docker-compose.yml
+└── .env.example             Plantilla de variables de entorno
+```
+
 ## Arquitectura
 
 ```
@@ -116,13 +174,15 @@ curl.exe -s -o NUL -w "%{http_code}" http://localhost:10020/images/default.jpg  
 
 ### Crear un usuario administrador
 
-El registro público crea usuarios con el `userType` que envía el frontend. Para crear un administrador por API:
+El formulario "Crear cuenta" de la tienda siempre crea clientes (`USER`). Para crear un administrador, llama a la API directamente. Después se ingresa con el **email** y la contraseña.
 
 ```powershell
 curl.exe -s -H "Content-Type: application/json" `
   -d '{\"username\":\"admin\",\"firstName\":\"Admin\",\"lastName\":\"Admin\",\"email\":\"admin@tienda.com\",\"address\":\"-\",\"cellphone\":\"-\",\"password\":\"CAMBIAR\",\"userType\":\"ADMIN\"}' `
   http://localhost:10020/api/v1/security/register
 ```
+
+> **Seguridad:** el endpoint de registro acepta cualquier `userType`, así que cualquiera que conozca la API podría crearse una cuenta `ADMIN`. Antes de exponer la aplicación a internet, restringe ese campo en el backend.
 
 ## Desarrollo local (sin Docker para la app)
 
