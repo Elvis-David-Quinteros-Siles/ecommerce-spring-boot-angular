@@ -1,24 +1,56 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-    <div class="container-fluid">
-      <a class="navbar-brand" [routerLink]="['/']" >Spring eCommerce</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
+<nav class="navbar navbar-expand-lg app-navbar sticky-top">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" [routerLink]="['/']">
+      <i class="bi bi-bag-heart-fill fs-4"></i> Spring eCommerce
+    </a>
+
+    <div class="d-flex align-items-center gap-1 order-lg-last">
+      <a class="nav-link cart-link px-2" [routerLink]="['/cart/sumary']" title="Carrito" aria-label="Carrito">
+        <i class="bi bi-cart3 fs-5"></i>
+        <span class="cart-badge" *ngIf="cartService.count > 0">{{ cartService.count }}</span>
+      </a>
+      <button class="navbar-toggler border-0 ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#userNav"
+        aria-controls="userNav" aria-expanded="false" aria-label="Abrir menú">
+        <i class="bi bi-list fs-3"></i>
       </button>
-  
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <form class="d-flex">
-              <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-              <button class="btn btn-outline-success" type="submit">Search</button>
-            </form>
-          </li>
-        </ul>
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" [routerLink]="['/cart/sumary']" >Carrito</a></li>
-          <li class="nav-item"><a class="nav-link" [routerLink]="['/user/login']">Login</a></li>
-        </ul>
-      </div>
     </div>
+
+    <div class="collapse navbar-collapse" id="userNav">
+      <form class="nav-search mx-lg-auto my-3 my-lg-0" (ngSubmit)="search()" role="search">
+        <div class="input-group">
+          <input class="form-control" type="search" name="q" [(ngModel)]="query"
+            placeholder="Buscar productos..." aria-label="Buscar productos">
+          <button class="btn btn-primary" type="submit" aria-label="Buscar"><i class="bi bi-search"></i></button>
+        </div>
+      </form>
+
+      <ul class="navbar-nav align-items-lg-center gap-lg-1 me-lg-2">
+        <ng-container *ngIf="!session; else logged">
+          <li class="nav-item">
+            <a class="nav-link" [routerLink]="['/user/login']" routerLinkActive="active">
+              <i class="bi bi-person me-1"></i>Ingresar
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-outline-primary btn-sm ms-lg-1" [routerLink]="['/user/register']">Crear cuenta</a>
+          </li>
+        </ng-container>
+        <ng-template #logged>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-person-circle me-1"></i>Mi cuenta
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+              <li *ngIf="isAdmin">
+                <a class="dropdown-item" [routerLink]="['/admin/product']"><i class="bi bi-speedometer2 me-2"></i>Panel de administración</a>
+              </li>
+              <li><a class="dropdown-item" [routerLink]="['/cart/sumary']"><i class="bi bi-cart3 me-2"></i>Mi carrito</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" [routerLink]="['/logout']"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
+            </ul>
+          </li>
+        </ng-template>
+      </ul>
+    </div>
+  </div>
 </nav>

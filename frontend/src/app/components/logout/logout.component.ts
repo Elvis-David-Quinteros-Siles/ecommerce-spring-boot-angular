@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { SessionStorageService } from 'src/app/services/session-storage.service';
 
 @Component({
@@ -8,14 +9,13 @@ import { SessionStorageService } from 'src/app/services/session-storage.service'
   styleUrls: ['./logout.component.css']
 })
 export class LogoutComponent implements OnInit {
-constructor(private sessionStorage : SessionStorageService, private router:Router){
+constructor(private sessionStorage : SessionStorageService, private router:Router, private toastr:ToastrService){
 
 }
 
   ngOnInit(): void {
-    console.log('LogoutComponent: '+ this.sessionStorage.getItem('token'))
     this.sessionStorage.removeItem('token');
-    console.log('LogoutComponent eliminado: '+ this.sessionStorage.getItem('token'))
+    this.toastr.info('Cerraste sesión correctamente', 'Sesión');
     this.router.navigate(['/']);
   }
 

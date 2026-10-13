@@ -21,22 +21,26 @@ import { RegistrationComponent } from './components/authetication/registration/r
 import { LoginComponent } from './components/authetication/login/login.component';
 import { LogoutComponent } from './components/logout/logout.component';
 import { authGuard } from './guards/auth.guard';
+import { FooterComponent } from './components/footer/footer.component';
+import { AuthErrorInterceptor } from './services/auth-error.interceptor';
 
+const admin = { canActivate: [authGuard], data: { role: 'ADMIN' } };
 
 const routes : Routes = [
   {path:'', component:HomeComponent},
-  {path:'admin/product', component: ProductListComponent},
-  {path:'admin/product/addproduct', component: ProductAddComponent},
-  {path: 'admin/product/update/:id', component:ProductAddComponent },
-  {path: 'admin/category', component:CategoryListComponent },
-  {path: 'admin/category/add', component:CategoryAddComponent},
-  {path: 'admin/category/update/:id', component:CategoryAddComponent},
+  {path:'admin/product', component: ProductListComponent, ...admin},
+  {path:'admin/product/addproduct', component: ProductAddComponent, ...admin},
+  {path: 'admin/product/update/:id', component:ProductAddComponent, ...admin },
+  {path: 'admin/category', component:CategoryListComponent, ...admin },
+  {path: 'admin/category/add', component:CategoryAddComponent, ...admin},
+  {path: 'admin/category/update/:id', component:CategoryAddComponent, ...admin},
   {path: 'cart/detailproduct/:id', component:DetailProductComponent},
-  {path: 'cart/sumary', component: SumaryOrderComponent, canActivate: [authGuard]},
+  {path: 'cart/sumary', component: SumaryOrderComponent},
   {path: 'payment/success', component: PaymentSuccessComponent},
   {path: 'user/register', component: RegistrationComponent},
   {path: 'user/login', component: LoginComponent},
-  {path: 'logout', component: LogoutComponent}
+  {path: 'logout', component: LogoutComponent},
+  {path: '**', redirectTo: ''}
 
 ];
 
@@ -55,19 +59,20 @@ const routes : Routes = [
     PaymentSuccessComponent,
     RegistrationComponent,
     LoginComponent,
-    LogoutComponent
+    LogoutComponent,
+    FooterComponent
   ],
   imports: [
     BrowserModule,
     HttpClientModule,
     FormsModule,
     BrowserAnimationsModule,
-    RouterModule.forRoot(routes),
-    ToastrModule.forRoot(),
-    
+    RouterModule.forRoot(routes, { scrollPositionRestoration: 'top' }),
+    ToastrModule.forRoot({ positionClass: 'toast-bottom-right', timeOut: 3000, progressBar: true, preventDuplicates: true }),
+
   ],
   providers: [
- 
+    { provide: HTTP_INTERCEPTORS, useClass: AuthErrorInterceptor, multi: true }
   ],
   bootstrap: [AppComponent]
 })

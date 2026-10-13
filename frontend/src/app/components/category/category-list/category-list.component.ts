@@ -12,6 +12,7 @@ import Swal from 'sweetalert2';
 export class CategoryListComponent implements OnInit {
 
   categories: Category [] = [];
+  loading = true;
 
   constructor(private categoryService:CategoryService, private toastr:ToastrService){}
 
@@ -21,33 +22,36 @@ export class CategoryListComponent implements OnInit {
   }
 
   listCategories(){
-    this.categoryService.getCategoryList().subscribe(
-      data => this.categories = data
-    );
+    this.categoryService.getCategoryList().subscribe({
+      next: data => {
+        this.categories = data;
+        this.loading = false;
+      },
+      error: () => this.loading = false
+    });
   }
 
-  deleteCategoryById(id:number){
-    console.log('id de la categoria antes de eliminar: '+id);
-    
+  deleteCategoryById(category: Category){
+
     Swal.fire({
-      title: 'Está seguro que quiere eliminar el registro?',
-      text: "",
+      title: '¿Eliminar categoría?',
+      text: `"${category.name}" se eliminará de forma permanente.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
       confirmButtonText: 'Eliminar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true
     }).then((result) => {
       if (result.isConfirmed) {
-        this.categoryService.deleteCategoryById(id).subscribe(
-          ()=> this.listCategories()
-        );
-        Swal.fire(
-          'Categorías',
-          'Categoría eliminado correctamente.',
-          'success'
-        )
+        this.categoryService.deleteCategoryById(category.id).subscribe({
+          next: () => {
+            this.toastr.success('Categoría eliminada correctamente', 'Categorías');
+            this.listCategories();
+          },
+          error: () => this.toastr.error('No se pudo eliminar. Verifica que no tenga productos asociados.', 'Categorías')
+        });
       }
     })
 

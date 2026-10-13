@@ -13,26 +13,33 @@ import { SessionStorageService } from 'src/app/services/session-storage.service'
 })
 export class ProductAddComponent implements OnInit{
   id : number = 0;
-  code : string = '001';
+  code : string = '';
   name : string = '';
   description : string = '';
-  price : number = 0;
+  price : number | null = null;
   urlImage : string = '';
   userId : string = '0';
-  categoryId : string = '3';
+  categoryId : string = '';
   user : number = 0;
 
   selectFile! : File;
+  preview : string | null = null;
+  saving = false;
+  readonly maxImageMb = 10;
 
   categories : Category [] = [];
 
-  constructor(private productService : ProductService, 
-    private router:Router, 
-    private activatedRoute:ActivatedRoute, 
-    private toastr: ToastrService, 
+  constructor(private productService : ProductService,
+    private router:Router,
+    private activatedRoute:ActivatedRoute,
+    private toastr: ToastrService,
     private categoryService:CategoryService,
     private sessionStorage : SessionStorageService){
 
+  }
+
+  get isEdit(){
+    return this.id != 0;
   }
 
   ngOnInit(): void {
@@ -42,31 +49,38 @@ export class ProductAddComponent implements OnInit{
     this.userId = this.user.toString();
   }
   addProduct(){
+    if (this.saving) {
+      return;
+    }
+    this.saving = true;
     const formData = new FormData();
     formData.append('id',this.id.toString());
-    formData.append('code', this.code);
-    formData.append('name', this.name);
-    formData.append('description',this.description);
-    formData.append('price', this.price.toString());
-    formData.append('image', this.selectFile);
+    formData.append('code', this.code.trim());
+    formData.append('name', this.name.trim());
+    formData.append('description',this.description.trim());
+    formData.append('price', String(this.price ?? 0));
+    if (this.selectFile) {
+      formData.append('image', this.selectFile);
+    }
     formData.append('urlImage', this.urlImage);
     formData.append('userId', this.userId);
     formData.append('categoryId', this.categoryId);
-    //console.log(formData.get('id'));
-    console.log(formData);
 
-    this.productService.createProduct(formData).subscribe(
-      data => {
-        console.log(data);
+    this.productService.createProduct(formData).subscribe({
+      next: () => {
         if(this.id==0){
-          this.toastr.success('Producto registrado correctamante', 'Productos');
+          this.toastr.success('Producto registrado correctamente', 'Productos');
         }else{
-          this.toastr.success('Producto actualizado correctamante', 'Productos');
+          this.toastr.success('Producto actualizado correctamente', 'Productos');
         }
-        
-        this.router.navigate(['admin/product']);      
+
+        this.router.navigate(['admin/product']);
+      },
+      error: () => {
+        this.saving = false;
+        this.toastr.error('No se pudo guardar el producto. Revisa los datos e inténtalo nuevamente.', 'Productos');
       }
-    );  
+    });
 
   }
 
@@ -75,7 +89,6 @@ export class ProductAddComponent implements OnInit{
       prod => {
         let id = prod['id'];
         if(id){
-          console.log('el valor de la variable id es: '+id);
           this.productService.getProductById(id).subscribe(
             data =>{
               this.id = data.id;
@@ -85,7 +98,8 @@ export class ProductAddComponent implements OnInit{
               this.urlImage = data.urlImage;
               this.price = data.price;
               this.userId = data.userId;
-              this.categoryId = data.categoryId;
+              this.categoryId = String(data.categoryId);
+              this.preview = data.urlImage;
             }
           );
         }
@@ -96,7 +110,24 @@ export class ProductAddComponent implements OnInit{
   }
 
   onFileSelected(event : any){
-    this.selectFile = event.target.files[0];
+    const file : File | undefined = event.target.files[0];
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      this.toastr.warning('Selecciona un archivo de imagen (JPG, PNG, WEBP...)', 'Imagen');
+      event.target.value = '';
+      return;
+    }
+    if (file.size > this.maxImageMb * 1024 * 1024) {
+      this.toastr.warning(`La imagen no puede superar los ${this.maxImageMb} MB`, 'Imagen');
+      event.target.value = '';
+      return;
+    }
+    this.selectFile = file;
+    const reader = new FileReader();
+    reader.onload = () => this.preview = reader.result as string;
+    reader.readAsDataURL(file);
   }
 
   getCategories(){

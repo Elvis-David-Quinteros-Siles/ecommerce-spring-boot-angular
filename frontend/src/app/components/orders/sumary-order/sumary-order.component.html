@@ -1,70 +1,89 @@
-<!-- Header User-->
 <app-header-user></app-header-user>
 
-<!-- Page Content -->
-<div class="container">
+<main class="page">
+  <div class="container">
 
-  <!-- Page Heading/Breadcrumbs -->
-  <h1 class="mt-4 mb-3">
-    Spring eCommerce <small>Resumen de la orden</small>
-  </h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a [routerLink]="['/']">Inicio</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Carrito</li>
+      </ol>
+    </nav>
 
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a [routerLink]="['/']">Home</a></li>
-    <li class="breadcrumb-item active">Orden</li>
-  </ol>
+    <div class="page-header">
+      <div>
+        <h1>Tu carrito</h1>
+        <p *ngIf="items.length > 0">Revisa tus productos antes de pagar.</p>
+      </div>
+    </div>
 
-  <!-- Blog Post -->
-  <div class="card mb-4">
-    <div class="card-body">
-      <div class="row">
-        <div class="col-lg-9">
-          <div class="card-body">
-            <h5 class="card-title">
-              DATOS ORDEN
-            </h5>
-            <h6><strong> Nombre: </strong> {{firstName}}  {{lastName}}</h6>
-            <h6><strong>Correo: </strong> {{email}}  </h6>
-            <h6><strong> Dirección: </strong> {{address}}</h6>
+    <!-- Carrito vacio -->
+    <div class="panel empty-state" *ngIf="items.length === 0">
+      <i class="bi bi-cart-x"></i>
+      <h2>Tu carrito está vacío</h2>
+      <p>Agrega productos para comenzar tu compra.</p>
+      <a class="btn btn-primary" [routerLink]="['/']"><i class="bi bi-shop me-1"></i>Ir a la tienda</a>
+    </div>
 
-            <h5 class="card-title">
-              PRODUCTOS
-            </h5>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th scope="col">Producto</th>
-                    <th scope="col">Precio</th>
-                    <th scope="col">Cantidad</th>
-                    <th scope="col">Total</th>
-                    <th>Eliminar</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let item of items">
-                    <td>{{item.productName}}</td>
-                    <td>{{item.price}}</td>
-                    <td>{{item.quantity}}</td>
-                    <td>{{item.getTotalPriceItem()}}</td>
-                    <td><button class="btn btn-danger" (click)="deleteItemCart(item.productId)" >Quitar</button> </td>
-                  </tr>
-                </tbody>
-              </table>
+    <div class="row g-4" *ngIf="items.length > 0">
+      <!-- Productos -->
+      <div class="col-lg-8">
+        <div class="panel panel-body">
+          <div class="cart-item" *ngFor="let item of items">
+            <img class="table-thumb" style="width: 72px; height: 72px" [src]="item.urlImage || '/images/default.jpg'" [alt]="item.productName" (error)="onImageError($event)">
+            <div class="info">
+              <a class="title text-decoration-none text-reset d-block text-truncate" [routerLink]="['/cart/detailproduct', item.productId]">{{ item.productName }}</a>
+              <div class="small text-muted">{{ item.price | currency:'USD' }} c/u</div>
+              <div class="qty-stepper sm mt-2">
+                <button type="button" (click)="changeQuantity(item, -1)" [disabled]="item.quantity <= 1" aria-label="Disminuir"><i class="bi bi-dash"></i></button>
+                <span>{{ item.quantity }}</span>
+                <button type="button" (click)="changeQuantity(item, 1)" [disabled]="item.quantity >= maxQuantity" aria-label="Aumentar"><i class="bi bi-plus"></i></button>
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold mb-2">{{ item.getTotalPriceItem() | currency:'USD' }}</div>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteItemCart(item.productId)" title="Quitar">
+                <i class="bi bi-trash3"></i><span class="d-none d-sm-inline ms-1">Quitar</span>
+              </button>
+            </div>
           </div>
         </div>
 
+        <a class="btn btn-link px-0 mt-2 text-decoration-none" [routerLink]="['/']"><i class="bi bi-arrow-left me-1"></i>Seguir comprando</a>
+      </div>
 
-        <div class="col-lg-3">
-          <h2 class="card-title">Resumen Orden</h2>
-          <ul class="list-group">
-            <li class="list-group-item">
-              <h5> Total: {{totalCart}}</h5>
-            </li>
-            <a class="btn btn-dark" (click)="generateOrder()">Pagar con Paypal</a>
-          </ul>
+      <!-- Resumen -->
+      <div class="col-lg-4">
+        <div class="panel panel-body mb-3" style="position: sticky; top: 90px">
+          <h2 class="h5 fw-bold mb-3">Resumen</h2>
+          <div class="summary-row"><span>Productos ({{ units }} {{ units === 1 ? 'unidad' : 'unidades' }})</span><span>{{ totalCart | currency:'USD' }}</span></div>
+          <div class="summary-row total"><span>Total</span><span>{{ totalCart | currency:'USD' }}</span></div>
+
+          <ng-container *ngIf="loggedIn; else needLogin">
+            <div class="bg-brand-soft rounded-3 p-3 my-3 small">
+              <div class="fw-semibold mb-1"><i class="bi bi-person me-1"></i>Datos de envío</div>
+              <div>{{ firstName }} {{ lastName }}</div>
+              <div class="text-muted">{{ email }}</div>
+              <div class="text-muted">{{ address }}</div>
+            </div>
+            <button class="btn btn-primary btn-lg w-100" (click)="generateOrder()" [disabled]="paying">
+              <span *ngIf="paying" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              <i *ngIf="!paying" class="bi bi-paypal me-2"></i>{{ paying ? 'Redirigiendo a PayPal...' : 'Pagar con PayPal' }}
+            </button>
+          </ng-container>
+          <ng-template #needLogin>
+            <p class="small text-muted my-3">Inicia sesión para completar tu compra.</p>
+            <button class="btn btn-primary btn-lg w-100" (click)="goToLogin()">
+              <i class="bi bi-box-arrow-in-right me-2"></i>Ingresar para pagar
+            </button>
+          </ng-template>
+
+          <p class="small text-muted text-center mt-3 mb-0"><i class="bi bi-shield-lock me-1"></i>Pago procesado por PayPal</p>
         </div>
       </div>
     </div>
+
   </div>
-</div>
-<!-- /.container -->
+</main>
+
+<app-footer></app-footer>

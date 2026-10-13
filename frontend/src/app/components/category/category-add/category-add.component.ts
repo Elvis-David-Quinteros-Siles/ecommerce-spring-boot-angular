@@ -12,22 +12,34 @@ import { CategoryService } from 'src/app/services/category.service';
 export class CategoryAddComponent implements OnInit{
   id : number = 0;
   name : string = '';
+  saving = false;
 
   constructor(private categoryService:CategoryService, private toastr:ToastrService, private router:Router, private activatedRoute: ActivatedRoute){}
+
+  get isEdit(){
+    return this.id != 0;
+  }
 
   ngOnInit(): void {
     this.getCategoryById();
   }
 
   addCategory(){
-    console.log(this.name);
-    let category = new Category(this.id,this.name);    
-    this.categoryService.createCategory(category).subscribe(
-      res=>{
-        this.toastr.success('Categoria registrada correctamente','Categorias');
+    if (this.saving) {
+      return;
+    }
+    this.saving = true;
+    let category = new Category(this.id,this.name.trim());
+    this.categoryService.createCategory(category).subscribe({
+      next: () => {
+        this.toastr.success(this.isEdit ? 'Categoría actualizada correctamente' : 'Categoría registrada correctamente','Categorías');
         this.router.navigate(['admin/category']);
-      } 
-    );
+      },
+      error: () => {
+        this.saving = false;
+        this.toastr.error('No se pudo guardar la categoría', 'Categorías');
+      }
+    });
   }
 
   getCategoryById(){
@@ -35,7 +47,6 @@ export class CategoryAddComponent implements OnInit{
       category =>{
         let id = category['id'];
         if(id){
-          console.log('Valor de la variable id: '+id);
           this.categoryService.getCategoryById(id).subscribe(
             data =>{
               this.id = data.id;

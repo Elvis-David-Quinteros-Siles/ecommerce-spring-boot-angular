@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { Userdto } from 'src/app/common/userdto';
 import { AuthenticationService } from 'src/app/services/authentication.service';
 import { SessionStorageService } from 'src/app/services/session-storage.service';
@@ -12,34 +13,49 @@ import { SessionStorageService } from 'src/app/services/session-storage.service'
 export class LoginComponent implements OnInit{
   username : string = '';
   password : string = '';
+  showPassword = false;
+  loading = false;
+  private returnUrl : string | null = null;
 
 
   ngOnInit(): void {
-
+    const params = this.activatedRoute.snapshot.queryParamMap;
+    this.returnUrl = params.get('returnUrl');
+    this.username = params.get('email') ?? '';
   }
 
-  constructor(private authentication : AuthenticationService, 
+  constructor(private authentication : AuthenticationService,
     private sessionStorage : SessionStorageService,
-    private router: Router
+    private router: Router,
+    private activatedRoute: ActivatedRoute,
+    private toastr: ToastrService
     ){
 
   }
 
   login(){
-    let userDto = new Userdto(this.username, this.password);
-    this.authentication.login(userDto).subscribe(
-      token => {
-        console.log(token);
-        //this.sessionStorage.removeItem('token');
+    if (this.loading) {
+      return;
+    }
+    this.loading = true;
+    let userDto = new Userdto(this.username.trim(), this.password);
+    this.authentication.login(userDto).subscribe({
+      next: token => {
         this.sessionStorage.setItem('token', token);
-        if(token.type == 'ADMIN'){
+        this.toastr.success('Bienvenido', 'Sesión iniciada');
+        if (this.returnUrl) {
+          this.router.navigateByUrl(this.returnUrl);
+        } else if(token.type == 'ADMIN'){
           this.router.navigate(['/admin/product']);
         }else{
           this.router.navigate(['/']);
         }
+      },
+      error: () => {
+        this.loading = false;
+        this.toastr.error('Usuario o contraseña incorrectos', 'Login');
       }
-    );
-    console.log(userDto);
+    });
   }
 
 

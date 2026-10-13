@@ -4,7 +4,6 @@ import { ToastrService } from 'ngx-toastr';
 import { ItemCart } from 'src/app/common/item-cart';
 import { CartService } from 'src/app/services/cart.service';
 import { HomeService } from 'src/app/services/home.service';
-import { ProductService } from 'src/app/services/product.service';
 
 @Component({
   selector: 'app-detail-product',
@@ -17,13 +16,16 @@ export class DetailProductComponent implements OnInit {
   description :string = '';
   price : number =0;
   urlImage : string = '';
-  quantity : number = 0;
+  quantity : number = 1;
+  readonly maxQuantity = 10;
+  loading = true;
+  notFound = false;
 
   ngOnInit(): void {
     this.getProductById();
   }
 
-  constructor(private homeService:HomeService, private activatedRoute: ActivatedRoute, private cartService:CartService, private toastr:ToastrService ){
+  constructor(private homeService:HomeService, private activatedRoute: ActivatedRoute, public cartService:CartService, private toastr:ToastrService ){
 
   }
 
@@ -32,36 +34,40 @@ export class DetailProductComponent implements OnInit {
       p => {
         let id = p['id'];
         if(id){
-          this.homeService.getProductById(id).subscribe(
-            data =>{
+          this.loading = true;
+          this.homeService.getProductById(id).subscribe({
+            next: data =>{
+              if (!data) { this.notFound = true; this.loading = false; return; }
               this.id = data.id;
               this.name = data.name;
               this.description = data.description;
               this.urlImage = data.urlImage;
               this.price = data.price;
-            }
-          );
+              this.loading = false;
+            },
+            error: () => { this.notFound = true; this.loading = false; }
+          });
         }
       }
 
     );
   }
 
-  addCart(id : number){
-    console.log('id product: ', id);
-    console.log('name product: ', this.name);
-    console.log('price product: ', this.price);
-    console.log('quantity product: ', this.quantity);
+  changeQuantity(delta: number){
+    this.quantity = Math.min(this.maxQuantity, Math.max(1, this.quantity + delta));
+  }
 
-    let item = new ItemCart(id, this.name, this.quantity, this.price);
+  addCart(id : number){
+    let item = new ItemCart(id, this.name, this.quantity, this.price, this.urlImage);
 
     this.cartService.addItemCart(item);
 
-    console.log("Total carrito: ");
-    console.log(this.cartService.totalCart());
+    this.toastr.success(`${this.quantity} × ${this.name} añadido al carrito`, 'Carrito');
+    this.quantity = 1;
+  }
 
-    this.toastr.success('Producto añadido al carrito de compras', 'Carrito compras');
-
+  onImageError(event: Event){
+    (event.target as HTMLImageElement).src = '/images/default.jpg';
   }
 
 }

@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,9 +33,15 @@ public class LoginController {
 
     @PostMapping("/login")
     public ResponseEntity<JWTClient>  login(@RequestBody UserDTO userDTO){
-        Authentication authentication = authenticationManager.authenticate(
-               new  UsernamePasswordAuthenticationToken( userDTO.username(), userDTO.password())
-        );
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                   new  UsernamePasswordAuthenticationToken( userDTO.username(), userDTO.password())
+            );
+        } catch (AuthenticationException e) {
+            log.info("Login fallido para {}: {}", userDTO.username(), e.getMessage());
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         log.info("Details: {}", SecurityContextHolder.getContext().getAuthentication().getName());

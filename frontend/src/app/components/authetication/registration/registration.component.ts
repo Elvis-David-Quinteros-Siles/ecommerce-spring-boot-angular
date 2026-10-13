@@ -11,7 +11,7 @@ import { AuthenticationService } from 'src/app/services/authentication.service';
   styleUrls: ['./registration.component.css']
 })
 export class RegistrationComponent  implements OnInit{
-  
+
   username : string = '';
   name : string = '';
   surname : string = '';
@@ -20,6 +20,8 @@ export class RegistrationComponent  implements OnInit{
   cellphone : string = '';
   password : string = '';
   userType : string = '';
+  showPassword = false;
+  loading = false;
 
   ngOnInit(): void {
   }
@@ -29,18 +31,24 @@ export class RegistrationComponent  implements OnInit{
     ){}
 
   register(){
-    this.username = this.email;
+    if (this.loading) {
+      return;
+    }
+    this.loading = true;
+    this.username = this.email.trim();
     this.userType = UserType.USER
-    let user = new User (0, this.username, this.name, this.surname, this.email, this.address, this.cellphone, this.password, this.userType);
-    this.authetication.register(user).subscribe(
-      res => {
-        this.toastr.success('Usuario registrado', 'Usuario');
-      console.log(res)}
-    );
-
-
-    console.log(user);
-    this.router.navigate(['user/login']);
+    let user = new User (0, this.username, this.name.trim(), this.surname.trim(), this.email.trim(), this.address.trim(), this.cellphone.trim(), this.password, this.userType);
+    // Solo se navega al login cuando el registro se confirma
+    this.authetication.register(user).subscribe({
+      next: () => {
+        this.toastr.success('Tu cuenta fue creada. Ya puedes ingresar.', 'Registro');
+        this.router.navigate(['user/login'], { queryParams: { email: this.username } });
+      },
+      error: () => {
+        this.loading = false;
+        this.toastr.error('No se pudo crear la cuenta. Es posible que el email ya esté registrado.', 'Registro');
+      }
+    });
   }
 
 }

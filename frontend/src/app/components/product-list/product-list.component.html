@@ -1,40 +1,75 @@
 <app-header-admin> </app-header-admin>
 
-        <!-- Page Content List Products-->
-        <div class="container">
-            <!-- Page Heading/Breadcrumbs -->
-            <h1 class="mt-4 mb-3">
-                Spring eCommerce <small>Productos</small>
-            </h1>
-        
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a routerLink="">Home</a></li>
-                <li class="breadcrumb-item active">Ver Productos</li>
-            </ol>
-        
-            <a class="btn btn-primary" routerLink="/admin/product/addproduct" > Crear Producto</a>
-            <h2>Productos</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Nombre</th>
-                        <th>Descripción</th>
-                        <th>Precio</th>
-                        <th>Editar</th>
-                        <th>Eliminar</th>
-                    </tr>
-                </thead>
-                <tbody *ngFor="let producto of products">
-                    <tr>
-                        <td>{{producto.code}}</td>
-                        <td>{{producto.name}}</td>
-                        <td>{{producto.description}}</td>
-                        <td>{{producto.price}}</td>
-                        <td><button class="btn btn-warning" [routerLink]="['/admin/product/update', producto.id]">Editar</button> </td>
-                        <td><button class="btn btn-danger" (click)="deleteProductById(producto.id)" >Eliminar</button>
-                    </tr>
-                </tbody>
-            </table>        
+<main class="page">
+    <div class="container">
+
+        <div class="page-header">
+            <div>
+                <h1>Productos</h1>
+                <p>Administra el catálogo de la tienda.</p>
+            </div>
+            <a class="btn btn-primary" routerLink="/admin/product/addproduct"><i class="bi bi-plus-lg me-1"></i>Nuevo producto</a>
         </div>
 
+        <div class="panel">
+            <div class="p-3 border-bottom d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                <div class="input-group" style="max-width: 360px">
+                    <span class="input-group-text bg-white border-end-0 pe-1" style="border-radius: 10px 0 0 10px"><i class="bi bi-search text-muted"></i></span>
+                    <input type="search" class="form-control border-start-0 ps-1" style="border-radius: 0 10px 10px 0" placeholder="Buscar por nombre, código o descripción"
+                        [(ngModel)]="filter" name="filter" aria-label="Buscar productos">
+                </div>
+                <span class="small text-muted" *ngIf="!loading">{{ filtered.length }} de {{ products.length }} productos</span>
+            </div>
+
+            <div class="p-5 text-center" *ngIf="loading">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+
+            <div class="empty-state" *ngIf="!loading && filtered.length === 0">
+                <i class="bi bi-box-seam"></i>
+                <h2>{{ products.length === 0 ? 'Aún no hay productos' : 'Sin resultados' }}</h2>
+                <p>{{ products.length === 0 ? 'Crea el primer producto del catálogo.' : 'Prueba con otro término de búsqueda.' }}</p>
+                <a *ngIf="products.length === 0" class="btn btn-primary" routerLink="/admin/product/addproduct"><i class="bi bi-plus-lg me-1"></i>Nuevo producto</a>
+            </div>
+
+            <div class="table-responsive" *ngIf="!loading && filtered.length > 0">
+                <table class="table table-modern">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Código</th>
+                            <th class="d-none d-md-table-cell">Categoría</th>
+                            <th class="text-end">Precio</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let producto of filtered">
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <img class="table-thumb" [src]="producto.urlImage" [alt]="producto.name" (error)="onImageError($event)">
+                                    <div style="min-width: 0">
+                                        <div class="fw-semibold">{{ producto.name }}</div>
+                                        <div class="small text-muted text-truncate-2 d-none d-lg-block">{{ producto.description }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge text-bg-light border fw-normal">{{ producto.code }}</span></td>
+                            <td class="d-none d-md-table-cell">{{ categoryName(producto.categoryId) }}</td>
+                            <td class="text-end fw-semibold">{{ producto.price | currency:'USD' }}</td>
+                            <td class="text-end text-nowrap">
+                                <button class="btn btn-sm btn-outline-secondary me-1" [routerLink]="['/admin/product/update', producto.id]" title="Editar">
+                                    <i class="bi bi-pencil"></i><span class="d-none d-xl-inline ms-1">Editar</span>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" (click)="deleteProductById(producto)" title="Eliminar">
+                                    <i class="bi bi-trash3"></i><span class="d-none d-xl-inline ms-1">Eliminar</span>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</main>

@@ -7,25 +7,14 @@ import { SessionStorageService } from './session-storage.service';
 })
 export class HeaderService {
 
-  private token = '';
-  public headers : HttpHeaders = new HttpHeaders;
+  constructor(private sessionStorage : SessionStorageService) { }
 
-  constructor(private sessionStorage : SessionStorageService) { 
-
-    if( this.sessionStorage.getItem('token') != null){
-      console.log('HeaderService: '+this.sessionStorage.getItem('token'));
-    this.token = this.sessionStorage.getItem('token').token;
-    this.headers = new HttpHeaders(
-      {
-        ///'Content-Type' : 'application/json',
-        'Authorization' : `${this.token}`
-
-      }
-
-    );
-
+  // Se calcula en cada peticion para tomar el token vigente (tras login/logout)
+  get headers() : HttpHeaders {
+    const session = this.sessionStorage.getItem('token');
+    if (session != null) {
+      return new HttpHeaders({ 'Authorization' : `${session.token}` });
     }
-    
-
+    return new HttpHeaders();
   }
 }

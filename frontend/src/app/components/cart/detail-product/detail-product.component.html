@@ -1,50 +1,85 @@
 <app-header-user></app-header-user>
 
-<!-- Page Content -->
-<div class="container">
+<main class="page">
+  <div class="container">
 
-    <!-- Page Heading/Breadcrumbs -->
-    <h1 class="mt-4 mb-3">
-      Spring eCommerce <small>Producto</small>
-    </h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a [routerLink]="['/']">Inicio</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ loading ? 'Producto' : name }}</li>
+      </ol>
+    </nav>
 
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-      <li class="breadcrumb-item active">Producto</li>
-    </ol>
+    <!-- Cargando -->
+    <div class="panel panel-body" *ngIf="loading">
+      <div class="row g-4">
+        <div class="col-lg-6"><div class="detail-image skeleton"></div></div>
+        <div class="col-lg-6">
+          <div class="skeleton mb-3" style="height: 32px; width: 70%"></div>
+          <div class="skeleton mb-4" style="height: 40px; width: 35%"></div>
+          <div class="skeleton mb-2" style="height: 14px"></div>
+          <div class="skeleton mb-2" style="height: 14px; width: 85%"></div>
+        </div>
+      </div>
+    </div>
 
-    <!-- Blog Post -->
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="row">
-          <div class="col-lg-6">
-            <a href="#"> <img class="img-fluid rounded"
-              src="{{urlImage}}"  alt="">
+    <!-- No encontrado -->
+    <div class="panel empty-state" *ngIf="!loading && notFound">
+      <i class="bi bi-question-circle"></i>
+      <h2>Producto no encontrado</h2>
+      <p>Es posible que ya no esté disponible.</p>
+      <a class="btn btn-primary" [routerLink]="['/']">Volver a la tienda</a>
+    </div>
+
+    <!-- Producto -->
+    <div class="panel panel-body" *ngIf="!loading && !notFound">
+      <div class="row g-4 g-lg-5 align-items-center">
+        <div class="col-lg-6">
+          <div class="detail-image">
+            <img [src]="urlImage" [alt]="name" (error)="onImageError($event)">
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <h1 class="h2 fw-bold mb-2">{{ name }}</h1>
+          <div class="price-lg text-brand mb-4">{{ price | currency:'USD' }}</div>
+
+          <h2 class="h6 text-uppercase text-muted fw-semibold small">Descripción</h2>
+          <p class="text-secondary mb-4" style="white-space: pre-line">{{ description || 'Sin descripción.' }}</p>
+
+          <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+            <div>
+              <div class="small text-muted mb-1">Cantidad</div>
+              <div class="qty-stepper">
+                <button type="button" (click)="changeQuantity(-1)" [disabled]="quantity <= 1" aria-label="Disminuir"><i class="bi bi-dash"></i></button>
+                <span>{{ quantity }}</span>
+                <button type="button" (click)="changeQuantity(1)" [disabled]="quantity >= maxQuantity" aria-label="Aumentar"><i class="bi bi-plus"></i></button>
+              </div>
+            </div>
+            <div class="ms-auto text-end">
+              <div class="small text-muted mb-1">Subtotal</div>
+              <div class="fw-bold fs-5">{{ price * quantity | currency:'USD' }}</div>
+            </div>
+          </div>
+
+          <div class="d-grid d-sm-flex gap-2">
+            <button type="button" (click)="addCart(id)" class="btn btn-primary btn-lg flex-sm-fill">
+              <i class="bi bi-cart-plus me-2"></i>Añadir al carrito
+            </button>
+            <a class="btn btn-outline-primary btn-lg" [routerLink]="['/cart/sumary']" *ngIf="cartService.getQuantity(id) > 0">
+              <i class="bi bi-bag-check me-2"></i>Ir al carrito
             </a>
           </div>
-          <div class="col-lg-6">
-            <form action="#" method="POST">
-              <h2 class="card-title">{{name}}</h2>
 
-              <ul class="list-group">
-                <li class="list-group-item"><h5>Precio: {{price}}</h5></li>
-                <li class="list-group-item">
-                  <p>Descripción: {{description}}</p>
-                </li>
-                <li class="list-group-item"><h6>
-                  Cantidad: <input type="number"  [(ngModel)]="quantity" id="quantity" name="quantity" autocomplete="off"
-                  min="1" max="5" value="1">
-                </h6></li>
-              </ul>
-
-
-              <button (click)="addCart(id)"  class="btn btn-dark">Añadir al carrito </button>
-
-            </form>
-          </div>
+          <p class="small text-muted mt-3 mb-0" *ngIf="cartService.getQuantity(id) > 0">
+            <i class="bi bi-check-circle-fill text-success me-1"></i>
+            Tienes {{ cartService.getQuantity(id) }} en tu carrito.
+          </p>
         </div>
       </div>
     </div>
 
   </div>
-  <!-- /.container -->
+</main>
+
+<app-footer></app-footer>
