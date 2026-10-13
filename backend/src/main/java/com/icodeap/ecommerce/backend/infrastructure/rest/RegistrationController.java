@@ -23,7 +23,6 @@ public class RegistrationController {
 
     @PostMapping("/register")
     public ResponseEntity<User> register (@RequestBody User user){
-        log.info("Clave encriptada: {}", passwordEncoder.encode(user.getPassword()));
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return new ResponseEntity<>(registrationService.register(user), HttpStatus.CREATED);
     }

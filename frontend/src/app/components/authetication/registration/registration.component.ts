@@ -19,9 +19,14 @@ export class RegistrationComponent  implements OnInit{
   address : string = '';
   cellphone : string = '';
   password : string = '';
+  confirmPassword : string = '';
   userType : string = '';
   showPassword = false;
   loading = false;
+
+  get passwordMismatch(){
+    return this.confirmPassword.length > 0 && this.password !== this.confirmPassword;
+  }
 
   ngOnInit(): void {
   }
@@ -31,7 +36,7 @@ export class RegistrationComponent  implements OnInit{
     ){}
 
   register(){
-    if (this.loading) {
+    if (this.loading || this.passwordMismatch) {
       return;
     }
     this.loading = true;

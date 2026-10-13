@@ -22,6 +22,7 @@ import { LoginComponent } from './components/authetication/login/login.component
 import { LogoutComponent } from './components/logout/logout.component';
 import { authGuard } from './guards/auth.guard';
 import { FooterComponent } from './components/footer/footer.component';
+import { ChangePasswordComponent } from './components/authetication/change-password/change-password.component';
 import { AuthErrorInterceptor } from './services/auth-error.interceptor';
 
 const admin = { canActivate: [authGuard], data: { role: 'ADMIN' } };
@@ -39,6 +40,7 @@ const routes : Routes = [
   {path: 'payment/success', component: PaymentSuccessComponent},
   {path: 'user/register', component: RegistrationComponent},
   {path: 'user/login', component: LoginComponent},
+  {path: 'user/password', component: ChangePasswordComponent, canActivate: [authGuard]},
   {path: 'logout', component: LogoutComponent},
   {path: '**', redirectTo: ''}
 
@@ -60,7 +62,8 @@ const routes : Routes = [
     RegistrationComponent,
     LoginComponent,
     LogoutComponent,
-    FooterComponent
+    FooterComponent,
+    ChangePasswordComponent
   ],
   imports: [
     BrowserModule,

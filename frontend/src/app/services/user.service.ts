@@ -18,5 +18,9 @@ export class UserService {
     return this.httpClient.get<User>(`${this.apiUrl}/${id}`, { headers: this.headerService.headers });
   }
 
+  changePassword(currentPassword:string, newPassword:string):Observable<{message:string}>{
+    return this.httpClient.put<{message:string}>(`${this.apiUrl}/me/password`, { currentPassword, newPassword }, { headers: this.headerService.headers });
+  }
+
 
 }
