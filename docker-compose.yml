@@ -1,0 +1,58 @@
+# Ecommerce Spring Boot + Angular
+# Servicios externos (NO gestionados por este compose):
+#   - PostgreSQL: contenedor existente "postgres" (puerto 5432 publicado en el host)
+#   - MinIO:      contenedor "ecommerce-minio" creado con minio/run-minio.ps1
+
+services:
+  backend:
+    build: ./backend
+    image: ecommerce-backend:1.0
+    container_name: ecommerce-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8085
+      DB_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      MINIO_URL: http://${MINIO_CONTAINER}:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      APP_IMAGES_URL: /images/
+      APP_BACKEND_URL: ${PUBLIC_URL}
+      APP_FRONTEND_URL: ${PUBLIC_URL}
+      PAYPAL_MODE: ${PAYPAL_MODE}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - frontend-backend
+      - minio
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8085' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  frontend:
+    build: ./frontend
+    image: ecommerce-frontend:1.0
+    container_name: ecommerce-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - frontend-backend
+
+networks:
+  frontend-backend:
+    name: ecommerce-frontend-backend-net
+  minio:
+    name: ${MINIO_NETWORK}
+    external: true
