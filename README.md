@@ -8,7 +8,8 @@ Tienda en línea con backend en Spring Boot 3.1 (Java 17) y frontend en Angular 
 - Catálogo con buscador, ordenamiento por precio o nombre y vista de detalle del producto.
 - Carrito persistente (sobrevive a recargas) con control de cantidades y contador en el encabezado.
 - Registro e inicio de sesión con JWT. Tras ingresar, vuelves a la página donde estabas.
-- Pago con PayPal (sandbox): la orden se registra antes de redirigir y se confirma al volver.
+- Pago con PayPal (sandbox): el backend calcula el monto desde la orden (precios del catálogo) y solo la confirma tras verificar con PayPal que el pago se aprobó por ese monto y para esa orden.
+- Cada cliente solo ve sus propios datos y órdenes; listar todas las órdenes o cambiar su estado es exclusivo del administrador.
 - Diseño responsive (escritorio y móvil), estados de carga, estados vacíos y notificaciones.
 
 **Administración (rol `ADMIN`)**
