@@ -29,8 +29,8 @@ public class BeanConfiguration {
         return  new ProductService(iProductRepository, uploadFile);
     }
     @Bean
-    public OrderService orderService(IOrderRepository iOrderRepository){
-        return new OrderService(iOrderRepository);
+    public OrderService orderService(IOrderRepository iOrderRepository, IProductRepository iProductRepository){
+        return new OrderService(iOrderRepository, iProductRepository);
     }
     @Bean
     public UploadFile uploadFile(MinioClient minioClient,

@@ -24,14 +24,17 @@ public class PaypalService {
             String intent,
             String description,
             String cancelUrl,
-            String successUrl
+            String successUrl,
+            String custom
     ) throws PayPalRESTException {
         Amount amount = new Amount();
         amount.setCurrency(currency);
-        amount.setTotal(String.format(Locale.forLanguageTag(currency), "%.2f", total));
+        amount.setTotal(String.format(Locale.US, "%.2f", total));
 
         Transaction transaction = new Transaction();
         transaction.setDescription(description);
+        // Identifica la orden pagada; se verifica al ejecutar el pago
+        transaction.setCustom(custom);
         transaction.setAmount(amount);
 
         List<Transaction> transactions = new ArrayList<>();

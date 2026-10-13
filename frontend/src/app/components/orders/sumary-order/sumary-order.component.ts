@@ -79,12 +79,11 @@ export class SumaryOrderComponent implements OnInit {
 
     const orderProducts = this.items.map(item => new OrderProduct(null, item.productId, item.quantity, item.price));
     const order = new Order(null, new Date(), orderProducts, this.userId, OrderState.CANCELLED);
-    const dataPayment = new DataPayment ('PAYPAL', this.totalCart.toFixed(2), 'USD', 'COMPRA');
 
     this.orderService.createOrder(order).pipe(
       switchMap(data => {
         this.sessionStorage.setItem('order', data);
-        return this.paymentService.getUrlPaypalPayment(dataPayment);
+        return this.paymentService.getUrlPaypalPayment(new DataPayment('PAYPAL', this.totalCart.toFixed(2), 'USD', 'COMPRA', data.id));
       })
     ).subscribe({
       next: data => window.location.href = data.url,

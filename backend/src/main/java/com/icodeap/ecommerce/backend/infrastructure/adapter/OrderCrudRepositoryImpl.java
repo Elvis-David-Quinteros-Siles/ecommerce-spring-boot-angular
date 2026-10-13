@@ -50,11 +50,8 @@ public class OrderCrudRepositoryImpl implements IOrderRepository {
 
     @Override
     public void updateStateById(Integer id, String state) {
-        if(state.equals(OrderState.CANCELLED)){
-            iOrderCrudRepository.updateStateById(id,OrderState.CANCELLED);
-        }else{
-            iOrderCrudRepository.updateStateById(id,OrderState.CONFIRMED);
-        }
+        // Antes se comparaba un String con el enum (siempre false) y todo quedaba CONFIRMED
+        iOrderCrudRepository.updateStateById(id, OrderState.valueOf(state));
 
     }
 }
