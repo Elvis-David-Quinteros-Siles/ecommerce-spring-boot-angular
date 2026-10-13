@@ -25,6 +25,7 @@ services:
       PAYPAL_MODE: ${PAYPAL_MODE}
       PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
       PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:?falta JWT_SECRET en .env}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
@@ -43,7 +44,7 @@ services:
     container_name: ecommerce-frontend
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT}:80"
+      - "${FRONTEND_BIND:-0.0.0.0}:${FRONTEND_PORT}:80"
     depends_on:
       backend:
         condition: service_healthy

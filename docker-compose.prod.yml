@@ -1,0 +1,23 @@
+# Override para el VPS (tienda.edqs.online). Se activa desde .env con:
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml
+#
+# - El frontend se une a la red externa `proxy` para que el nginx principal
+#   (~/web) le haga proxy por nombre de contenedor. No se publica a internet.
+# - Limites de memoria para convivir con el resto de proyectos del servidor.
+
+services:
+  backend:
+    environment:
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75"
+    mem_limit: 768m
+
+  frontend:
+    mem_limit: 128m
+    networks:
+      - frontend-backend
+      - proxy
+
+networks:
+  proxy:
+    name: proxy
+    external: true

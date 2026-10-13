@@ -1,6 +1,7 @@
 package com.icodeap.ecommerce.backend.application;
 
 import com.icodeap.ecommerce.backend.domain.model.User;
+import com.icodeap.ecommerce.backend.domain.model.UserType;
 import com.icodeap.ecommerce.backend.domain.port.IUserRepository;
 
 public class RegistrationService {
@@ -10,7 +11,11 @@ public class RegistrationService {
         this.iUserRepository = iUserRepository;
     }
 
+    // El registro publico siempre crea un cliente nuevo: no permite elegir rol
+    // ni enviar un id (que sobrescribiria una cuenta existente)
     public User register (User user){
+        user.setId(null);
+        user.setUserType(UserType.USER);
         return iUserRepository.save(user);
     }
 }
