@@ -161,6 +161,36 @@ curl.exe -s http://localhost:10020/api/v1/home                                # 
 curl.exe -s -o NUL -w "%{http_code}" http://localhost:10020/images/default.jpg   # -> 200
 ```
 
+## Producción: https://tienda.edqs.online
+
+En el VPS (`ubuntu@158.69.216.13`) la app se integra con la infraestructura que ya comparten los demás proyectos:
+
+| Pieza | Cómo está montada |
+|---|---|
+| Código | `~/ecommerce-spring-boot-angular` (clon de este repositorio) con su propio `.env` (permisos 600). |
+| Compose | `.env` define `COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml`, así que basta con `docker compose ...`. |
+| HTTPS | El nginx principal (`~/web`, contenedor `nginx`) tiene un bloque `tienda.edqs.online` en `nginx/conf.d/edqs.conf` que hace proxy a `ecommerce-frontend:80` por la red `proxy`. El certificado es el de `edqs.online` (Let's Encrypt, renovación automática con el contenedor `certbot`). |
+| PostgreSQL | Instalado en el host (no en Docker). BD `ecommerce_db`, usuario `ecommerce_user`. `pg_hba.conf` y `ufw` solo permiten el puerto 5432 desde la subred fija del backend (`192.168.80.0/20`). |
+| MinIO | El MinIO compartido (`~/minio`, contenedor `minio`, red `minio-net`). Bucket `ecommerce-images` con un usuario propio (`ecommerce`) limitado a ese bucket. |
+| Puerto local | El frontend también queda en `127.0.0.1:10030`, solo accesible desde el servidor (útil para pruebas). |
+
+### Actualizar a la última versión
+
+```bash
+ssh ubuntu@158.69.216.13
+cd ~/ecommerce-spring-boot-angular
+git pull
+docker compose up -d --build
+```
+
+### Crear un administrador en producción
+
+El registro público solo crea clientes. Para dar rol de administrador a una cuenta ya registrada:
+
+```bash
+sudo -u postgres psql -d ecommerce_db -c "UPDATE users SET user_type='ADMIN' WHERE email='correo@ejemplo.com';"
+```
+
 ## Operación
 
 | Tarea | Comando |
@@ -174,15 +204,13 @@ curl.exe -s -o NUL -w "%{http_code}" http://localhost:10020/images/default.jpg  
 
 ### Crear un usuario administrador
 
-El formulario "Crear cuenta" de la tienda siempre crea clientes (`USER`). Para crear un administrador, llama a la API directamente. Después se ingresa con el **email** y la contraseña.
+El registro (formulario o API) siempre crea clientes (`USER`) y no acepta `userType` ni `id`. Para crear un administrador, registra la cuenta desde "Crear cuenta" y luego cámbiale el rol en la base:
 
 ```powershell
-curl.exe -s -H "Content-Type: application/json" `
-  -d '{\"username\":\"admin\",\"firstName\":\"Admin\",\"lastName\":\"Admin\",\"email\":\"admin@tienda.com\",\"address\":\"-\",\"cellphone\":\"-\",\"password\":\"CAMBIAR\",\"userType\":\"ADMIN\"}' `
-  http://localhost:10020/api/v1/security/register
+docker exec postgres psql -U postgres -d ecommerce_db -c "UPDATE users SET user_type='ADMIN' WHERE email='correo@ejemplo.com';"
 ```
 
-> **Seguridad:** el endpoint de registro acepta cualquier `userType`, así que cualquiera que conozca la API podría crearse una cuenta `ADMIN`. Antes de exponer la aplicación a internet, restringe ese campo en el backend.
+Se ingresa con el **email** y la contraseña. Los tokens JWT se firman con `JWT_SECRET` (definido en `.env`, mínimo 64 caracteres).
 
 ## Desarrollo local (sin Docker para la app)
 
