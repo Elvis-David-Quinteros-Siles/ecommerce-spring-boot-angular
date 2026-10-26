@@ -1,0 +1,2 @@
+{{ with secret "secret/data/ecommerce-spring-boot-angular/prod" }}{{ range $k, $v := .Data.data }}{{ $k }}={{ $v }}
+{{ end }}{{ end }}
